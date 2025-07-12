@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import DoctorDebugPanel from './DoctorDebugPanel';
+import AppointmentDebugPanel from './AppointmentDebugPanel';
 
 interface Doctor {
   id: string;
@@ -319,6 +321,8 @@ const AppointmentForm = () => {
           </div>
         </CardContent>
       </Card>
+      <DoctorDebugPanel />
+      <AppointmentDebugPanel />
     </>
   );
 };

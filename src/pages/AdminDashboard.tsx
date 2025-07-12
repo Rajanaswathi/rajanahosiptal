@@ -33,12 +33,26 @@ interface Service {
   price?: string;
 }
 
+interface Appointment {
+  id: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhone: string;
+  doctorName: string;
+  date: string;
+  time: string;
+  status: string;
+  reason: string;
+  createdAt: any;
+}
+
 const AdminDashboard = () => {
-  const { userData, logout } = useAuth();
+  const { userData, logout, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('doctors');
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [showDoctorForm, setShowDoctorForm] = useState(false);
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
@@ -81,9 +95,19 @@ const AdminDashboard = () => {
       setServices(servicesData);
     });
 
+    // Listen to appointments
+    const unsubscribeAppointments = onSnapshot(collection(db, 'appointments'), (snapshot) => {
+      const appointmentsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Appointment[];
+      setAppointments(appointmentsData);
+    });
+
     return () => {
       unsubscribeDoctors();
       unsubscribeServices();
+      unsubscribeAppointments();
     };
   }, []);
 
@@ -106,8 +130,8 @@ const AdminDashboard = () => {
         uid: userCredential.user.uid
       });
 
-      // Add user data
-      await addDoc(collection(db, 'users'), {
+      // Add user data with UID as document ID
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
         uid: userCredential.user.uid,
         email: doctorForm.email,
         name: doctorForm.name,
@@ -194,8 +218,26 @@ const AdminDashboard = () => {
     }
   };
 
-  if (userData?.role !== 'admin') {
-    return <div>Access Denied</div>;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ProtectedRoute already handles role checking, this is just a fallback
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h2>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -425,6 +467,70 @@ const AdminDashboard = () => {
                 </Card>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'appointments' && (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">All Appointments</h2>
+              <div className="text-sm text-gray-600">
+                Total: {appointments.length} appointments
+              </div>
+            </div>
+
+            {appointments.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No appointments found</p>
+                  <p className="text-sm text-gray-500 mt-2">Appointments will appear here when patients book them</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {appointments.map((appointment) => (
+                  <Card key={appointment.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Users className="w-5 h-5 text-blue-600" />
+                            <h3 className="text-lg font-semibold">{appointment.patientName}</h3>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              appointment.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                              appointment.status === 'rescheduled' ? 'bg-orange-100 text-orange-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {appointment.status.toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div className="space-y-1">
+                              <p><strong>Doctor:</strong> {appointment.doctorName}</p>
+                              <p><strong>Date:</strong> {appointment.date}</p>
+                              <p><strong>Time:</strong> {appointment.time}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p><strong>Email:</strong> {appointment.patientEmail}</p>
+                              <p><strong>Phone:</strong> {appointment.patientPhone}</p>
+                              <p><strong>Reason:</strong> {appointment.reason}</p>
+                            </div>
+                          </div>
+                          {appointment.createdAt && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Booked: {new Date(appointment.createdAt.seconds * 1000).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

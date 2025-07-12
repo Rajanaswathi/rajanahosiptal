@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Doctors from "./pages/Doctors";
@@ -41,9 +42,30 @@ const App = () => (
                 <Route path="/emergency" element={<Emergency />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<AdminLogin />} />
-                <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/user-dashboard" element={<UserDashboard />} />
-                <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+                <Route 
+                  path="/admin-dashboard" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/user-dashboard" 
+                  element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                      <UserDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/doctor-dashboard" 
+                  element={
+                    <ProtectedRoute allowedRoles={['doctor']}>
+                      <DoctorDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { Calendar, Clock, User, FileText, Download } from 'lucide-react';
@@ -16,7 +16,7 @@ interface Appointment {
   date: string;
   time: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rescheduled' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'rescheduled' | 'cancelled' | 'completed';
   createdAt: Date;
   remarks?: string;
 }
@@ -32,13 +32,15 @@ interface HealthReport {
 }
 
 const UserDashboard = () => {
-  const { userData, logout } = useAuth();
+  const { userData, logout, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [healthReports, setHealthReports] = useState<HealthReport[]>([]);
   const [activeTab, setActiveTab] = useState('appointments');
 
   useEffect(() => {
-    if (!userData) return;
+    // Wait for auth to complete loading
+    if (authLoading || !userData) return;
 
     // Listen to user's appointments
     const appointmentsQuery = query(
@@ -74,15 +76,27 @@ const UserDashboard = () => {
       unsubscribeAppointments();
       unsubscribeReports();
     };
-  }, [userData]);
+  }, [userData, navigate, authLoading]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-100';
+      case 'confirmed': return 'text-green-600 bg-green-100';
       case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'rescheduled': return 'text-blue-600 bg-blue-100';
+      case 'completed': return 'text-blue-600 bg-blue-100';
+      case 'rescheduled': return 'text-orange-600 bg-orange-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getStatusMessage = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'Your appointment has been confirmed by the doctor';
+      case 'pending': return 'Waiting for doctor confirmation';
+      case 'completed': return 'Appointment completed';
+      case 'rescheduled': return 'Doctor has requested to reschedule this appointment';
+      case 'cancelled': return 'Appointment cancelled';
+      default: return '';
     }
   };
 
@@ -164,10 +178,27 @@ const UserDashboard = () => {
                           <strong>Reason:</strong> {appointment.reason}
                         </p>
                         {appointment.remarks && (
-                          <p className="text-gray-700">
+                          <p className="text-gray-700 mb-2">
                             <strong>Remarks:</strong> {appointment.remarks}
                           </p>
                         )}
+                        <div className="flex items-center space-x-2 mb-2">
+                          <p className="text-sm text-gray-600 italic flex-1">
+                            {getStatusMessage(appointment.status)}
+                          </p>
+                          {appointment.status === 'confirmed' && (
+                            <div className="flex items-center space-x-1 text-green-600">
+                              <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                              <span className="text-xs font-medium">CONFIRMED</span>
+                            </div>
+                          )}
+                          {appointment.status === 'rescheduled' && (
+                            <div className="flex items-center space-x-1 text-orange-600">
+                              <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></div>
+                              <span className="text-xs font-medium">NEEDS RESCHEDULING</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(appointment.status)}`}>
                         {appointment.status.toUpperCase()}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import DoctorDebugPanel from './DoctorDebugPanel';
+import AppointmentDebugPanel from './AppointmentDebugPanel';
 
 interface Doctor {
   id: string;
@@ -165,160 +168,162 @@ const AppointmentForm = () => {
             Book Your Appointment
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Patient Information */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="patientName" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Full Name *
-                </Label>
-                <Input
-                  id="patientName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.patientName}
-                  onChange={(e) => handleInputChange('patientName', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Phone Number *
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
+      <CardContent className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Patient Information */}
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address *
+              <Label htmlFor="patientName" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Full Name *
               </Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email address"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                id="patientName"
+                type="text"
+                placeholder="Enter your full name"
+                value={formData.patientName}
+                onChange={(e) => handleInputChange('patientName', e.target.value)}
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                Phone Number *
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                required
+              />
+            </div>
+          </div>
 
-            {/* Doctor Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email Address *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email address"
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              required
+            />
+          </div>
+
+          {/* Doctor Selection */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Select Doctor *
+            </Label>
+            <Select value={formData.doctor} onValueChange={handleDoctorChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose your preferred doctor" />
+              </SelectTrigger>
+              <SelectContent>
+                {doctorsLoading ? (
+                  <SelectItem value="loading" disabled>Loading doctors...</SelectItem>
+                ) : (
+                  <>
+                    {doctors.length > 0 ? (
+                      doctors.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          {doctor.name} - {doctor.specialization}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      fallbackDoctors.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          {doctor.name} - {doctor.specialization}
+                        </SelectItem>
+                      ))
+                    )}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date and Time */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Preferred Date *
+              </Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Select Doctor *
+                <Clock className="w-4 h-4" />
+                Preferred Time *
               </Label>
-              <Select value={formData.doctor} onValueChange={handleDoctorChange}>
+              <Select value={formData.time} onValueChange={(value) => handleInputChange('time', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose your preferred doctor" />
+                  <SelectValue placeholder="Choose time slot" />
                 </SelectTrigger>
                 <SelectContent>
-                  {doctorsLoading ? (
-                    <SelectItem value="loading" disabled>Loading doctors...</SelectItem>
-                  ) : (
-                    <>
-                      {doctors.length > 0 ? (
-                        doctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name} - {doctor.specialization}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        fallbackDoctors.map((doctor) => (
-                          <SelectItem key={doctor.id} value={doctor.id}>
-                            {doctor.name} - {doctor.specialization}
-                          </SelectItem>
-                        ))
-                      )}
-                    </>
-                  )}
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Date and Time */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Preferred Date *
-                </Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => handleInputChange('date', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Preferred Time *
-                </Label>
-                <Select value={formData.time} onValueChange={(value) => handleInputChange('time', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose time slot" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Reason for Visit */}
-            <div className="space-y-2">
-              <Label htmlFor="reason">
-                Reason for Visit (Optional)
-              </Label>
-              <Textarea
-                id="reason"
-                placeholder="Please describe your symptoms or reason for the appointment"
-                value={formData.reason}
-                onChange={(e) => handleInputChange('reason', e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <Button 
-              type="submit" 
-              disabled={loading || doctorsLoading}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3"
-            >
-              {loading ? 'Booking Appointment...' : 'Book Appointment'}
-            </Button>
-          </form>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">Important Information:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Appointments are subject to doctor availability</li>
-              <li>• We will call you within 24 hours to confirm your appointment</li>
-              <li>• Please arrive 15 minutes early for your appointment</li>
-              <li>• Bring a valid ID and insurance card if applicable</li>
-            </ul>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Reason for Visit */}
+          <div className="space-y-2">
+            <Label htmlFor="reason">
+              Reason for Visit (Optional)
+            </Label>
+            <Textarea
+              id="reason"
+              placeholder="Please describe your symptoms or reason for the appointment"
+              value={formData.reason}
+              onChange={(e) => handleInputChange('reason', e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button 
+            type="submit" 
+            disabled={loading || doctorsLoading}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3"
+          >
+            {loading ? 'Booking Appointment...' : 'Book Appointment'}
+          </Button>
+        </form>
+
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold text-blue-900 mb-2">Important Information:</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Appointments are subject to doctor availability</li>
+            <li>• We will call you within 24 hours to confirm your appointment</li>
+            <li>• Please arrive 15 minutes early for your appointment</li>
+            <li>• Bring a valid ID and insurance card if applicable</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+    <DoctorDebugPanel />
+    <AppointmentDebugPanel />
     </>
   );
 };

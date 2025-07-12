@@ -8,6 +8,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import AuthDebug from '@/components/AuthDebug';
+import TestDoctorLogin from '@/components/TestDoctorLogin';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,28 +20,38 @@ const Login = () => {
     phone: ''
   });
   const [loading, setLoading] = useState(false);
-  const { login, signup, userData } = useAuth();
+  const { login, signup, userData, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (userData) {
-      // Redirect based on role
-      switch (userData.role) {
-        case 'admin':
-          navigate('/admin-dashboard');
-          break;
-        case 'doctor':
-          navigate('/doctor-dashboard');
-          break;
-        case 'user':
-          navigate('/user-dashboard');
-          break;
-        default:
-          navigate('/');
-      }
+    console.log('🔄 Login useEffect triggered:', { authLoading, userData: userData?.role });
+    
+    // Only redirect if auth is not loading and userData exists
+    if (!authLoading && userData) {
+      console.log('🚀 Redirecting user with role:', userData.role);
+      // Add a small delay to ensure all state is properly set
+      setTimeout(() => {
+        switch (userData.role) {
+          case 'admin':
+            console.log('🔄 Redirecting to admin dashboard');
+            navigate('/admin-dashboard');
+            break;
+          case 'doctor':
+            console.log('🔄 Redirecting to doctor dashboard');
+            navigate('/doctor-dashboard');
+            break;
+          case 'user':
+            console.log('🔄 Redirecting to user dashboard');
+            navigate('/user-dashboard');
+            break;
+          default:
+            console.log('🔄 Redirecting to home');
+            navigate('/');
+        }
+      }, 100);
     }
-  }, [userData, navigate]);
+  }, [userData, authLoading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -224,6 +236,8 @@ const Login = () => {
             </CardContent>
           </Card>
         </motion.div>
+        <AuthDebug />
+        <TestDoctorLogin />
       </div>
     </div>
   );
