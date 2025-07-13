@@ -1,13 +1,15 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, User, Phone, MapPin } from 'lucide-react';
+import { Calendar, Clock, User, Phone, MapPin, LogIn } from 'lucide-react';
 import AppointmentForm from '@/components/AppointmentForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Appointments = () => {
+  const { userData, loading } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Hero Section */}
@@ -26,6 +28,24 @@ const Appointments = () => {
               Schedule your consultation with our experienced medical professionals. 
               Choose your preferred doctor, date, and time.
             </p>
+            
+            {/* Show login prompt in hero if not authenticated */}
+            {!loading && !userData && (
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mt-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <LogIn className="w-6 h-6" />
+                  <span className="text-lg font-semibold">Login Required</span>
+                </div>
+                <p className="text-blue-100 mb-4">
+                  Please login to your account to book an appointment
+                </p>
+                <Link to="/login">
+                  <Button variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+                    Login Now
+                  </Button>
+                </Link>
+              </div>
+            )}
           </motion.div>
         </div>
       </section>

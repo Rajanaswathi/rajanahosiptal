@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const BookAppointment: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     department: '',
     doctor: '',
@@ -12,6 +13,67 @@ const BookAppointment: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // If user is not authenticated, show login prompt
+  if (authLoading) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !userData) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center space-y-6">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Login Required</h2>
+              <p className="text-gray-600 mb-4">
+                You need to be logged in to book an appointment with our doctors. 
+                This ensures we can properly manage your appointment and send you confirmations.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <Link to="/login">
+                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded">
+                  Login to Your Account
+                </button>
+              </Link>
+              
+              <p className="text-sm text-gray-500">
+                Don't have an account? 
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-2">Why do I need to login?</h4>
+              <ul className="text-sm text-gray-600 space-y-1 text-left">
+                <li>• Track your appointment history</li>
+                <li>• Receive appointment confirmations via email</li>
+                <li>• Get appointment reminders</li>
+                <li>• Manage and reschedule appointments easily</li>
+                <li>• Access your medical records securely</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const departments = [
     'Cardiology',
@@ -38,6 +100,13 @@ const BookAppointment: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is still authenticated
+    if (!user || !userData) {
+      alert('You must be logged in to book an appointment');
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -46,8 +115,9 @@ const BookAppointment: React.FC = () => {
       
       console.log('Appointment booked:', {
         ...formData,
-        patientId: user?.id,
-        patientEmail: user?.email
+        patientId: user.id,
+        patientEmail: user.email,
+        userId: userData.uid
       });
       
       setSuccess(true);

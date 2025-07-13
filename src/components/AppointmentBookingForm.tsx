@@ -5,13 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock, User, Phone, Mail, LogIn } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import AuthenticationGuard from './AuthenticationGuard';
 
 interface Doctor {
   id: string;
@@ -22,78 +20,10 @@ interface Doctor {
 }
 
 const AppointmentBookingForm = () => {
-  const { userData, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
+  const { userData } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
-
-  // If user is not authenticated, show login prompt
-  if (authLoading) {
-    return (
-      <Card className="max-w-2xl mx-auto shadow-lg">
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <Card className="max-w-2xl mx-auto shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <LogIn className="w-6 h-6" />
-            Login Required
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="text-center space-y-6">
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <LogIn className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Please Login to Book an Appointment
-              </h3>
-              <p className="text-gray-600 mb-4">
-                You need to be logged in to book an appointment with our doctors. 
-                This ensures we can properly manage your appointment and send you confirmations.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <Link to="/login">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3">
-                  Login to Your Account
-                </Button>
-              </Link>
-              
-              <p className="text-sm text-gray-500">
-                Don't have an account? 
-                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
-                  Sign up here
-                </Link>
-              </p>
-            </div>
-
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">Why do I need to login?</h4>
-              <ul className="text-sm text-gray-600 space-y-1 text-left">
-                <li>• Track your appointment history</li>
-                <li>• Receive appointment confirmations via email</li>
-                <li>• Get appointment reminders</li>
-                <li>• Manage and reschedule appointments easily</li>
-                <li>• Access your medical records securely</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
   
   const [formData, setFormData] = useState({
     patientName: userData?.name || '',
@@ -174,44 +104,12 @@ const AppointmentBookingForm = () => {
     }));
   };
 
-  // Enhanced authentication check function
-  const checkAuthenticationStatus = () => {
-    // Check if user is authenticated via auth context
-    if (!userData) {
-      return false;
-    }
-    
-    // Additional check for local storage (backup)
-    const localUserData = localStorage.getItem('userData');
-    if (!localUserData) {
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleAuthenticationRequired = () => {
-    toast.error('Please login to book an appointment', {
-      action: {
-        label: 'Login',
-        onClick: () => navigate('/login')
-      }
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Enhanced authentication check
-    if (!checkAuthenticationStatus()) {
-      handleAuthenticationRequired();
-      return;
-    }
-    
-    // Double-check that userData exists and has required fields
-    if (!userData || !userData.uid) {
-      toast.error('Authentication error. Please login again.');
-      navigate('/login');
+    // Check if user is still authenticated
+    if (!userData) {
+      toast.error('You must be logged in to book an appointment');
       return;
     }
     
@@ -258,28 +156,10 @@ const AppointmentBookingForm = () => {
       });
     } catch (error) {
       console.error('Error booking appointment:', error);
-      
-      // Check if error is due to authentication
-      if (error instanceof Error && error.message.includes('permission')) {
-        toast.error('Authentication error. Please login again.');
-        navigate('/login');
-      } else {
-        toast.error('Failed to book appointment. Please try again.');
-      }
+      toast.error('Failed to book appointment. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  // Enhanced form validation before submission
-  const handleFormInteraction = (field: string, value: string) => {
-    // Check authentication on any form interaction
-    if (!checkAuthenticationStatus()) {
-      handleAuthenticationRequired();
-      return;
-    }
-    
-    handleInputChange(field, value);
   };
 
   return (
@@ -304,7 +184,7 @@ const AppointmentBookingForm = () => {
                 type="text"
                 placeholder="Enter your full name"
                 value={formData.patientName}
-                onChange={(e) => handleFormInteraction('patientName', e.target.value)}
+                onChange={(e) => handleInputChange('patientName', e.target.value)}
                 required
               />
             </div>
@@ -318,7 +198,7 @@ const AppointmentBookingForm = () => {
                 type="tel"
                 placeholder="Enter your phone number"
                 value={formData.phone}
-                onChange={(e) => handleFormInteraction('phone', e.target.value)}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
                 required
               />
             </div>
@@ -334,7 +214,7 @@ const AppointmentBookingForm = () => {
               type="email"
               placeholder="Enter your email address"
               value={formData.email}
-              onChange={(e) => handleFormInteraction('email', e.target.value)}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               required
             />
           </div>
@@ -345,16 +225,7 @@ const AppointmentBookingForm = () => {
               <User className="w-4 h-4" />
               Select Doctor *
             </Label>
-            <Select 
-              value={formData.doctor} 
-              onValueChange={(value) => {
-                if (!checkAuthenticationStatus()) {
-                  handleAuthenticationRequired();
-                  return;
-                }
-                handleDoctorChange(value);
-              }}
-            >
+            <Select value={formData.doctor} onValueChange={handleDoctorChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose your preferred doctor" />
               </SelectTrigger>
@@ -435,10 +306,10 @@ const AppointmentBookingForm = () => {
           {/* Submit Button */}
           <Button 
             type="submit" 
-            disabled={loading || doctorsLoading || !checkAuthenticationStatus()}
+            disabled={loading || doctorsLoading}
             className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3"
           >
-            {!checkAuthenticationStatus() ? 'Please Login First' : loading ? 'Booking Appointment...' : 'Book Appointment'}
+            {loading ? 'Booking Appointment...' : 'Book Appointment'}
           </Button>
         </form>
 
@@ -456,16 +327,4 @@ const AppointmentBookingForm = () => {
   );
 };
 
-const AppointmentForm = () => {
-  return (
-    <AuthenticationGuard 
-      title="Please Login to Book an Appointment"
-      message="You need to be logged in to book an appointment with our doctors. This ensures we can properly manage your appointment and send you confirmations."
-      showBenefits={true}
-    >
-      <AppointmentBookingForm />
-    </AuthenticationGuard>
-  );
-};
-
-export default AppointmentForm;
+export default AppointmentBookingForm;

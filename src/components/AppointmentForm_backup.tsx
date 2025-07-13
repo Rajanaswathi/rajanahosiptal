@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock, User, Phone, Mail } from 'lucide-react';
+import { Calendar, Clock, User, Phone, Mail, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import DoctorDebugPanel from './DoctorDebugPanel';
 import AppointmentDebugPanel from './AppointmentDebugPanel';
 
@@ -23,10 +24,77 @@ interface Doctor {
 }
 
 const AppointmentForm = () => {
-  const { userData } = useAuth();
+  const { userData, loading: authLoading } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
+
+  // If user is not authenticated, show login prompt
+  if (authLoading) {
+    return (
+      <Card className="max-w-2xl mx-auto shadow-lg">
+        <CardContent className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <Card className="max-w-2xl mx-auto shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <LogIn className="w-6 h-6" />
+            Login Required
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="text-center space-y-6">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <LogIn className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Please Login to Book an Appointment
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You need to be logged in to book an appointment with our doctors. 
+                This ensures we can properly manage your appointment and send you confirmations.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <Link to="/login">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3">
+                  Login to Your Account
+                </Button>
+              </Link>
+              
+              <p className="text-sm text-gray-500">
+                Don't have an account? 
+                <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-gray-900 mb-2">Why do I need to login?</h4>
+              <ul className="text-sm text-gray-600 space-y-1 text-left">
+                <li>• Track your appointment history</li>
+                <li>• Receive appointment confirmations via email</li>
+                <li>• Get appointment reminders</li>
+                <li>• Manage and reschedule appointments easily</li>
+                <li>• Access your medical records securely</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   const [formData, setFormData] = useState({
     patientName: userData?.name || '',
@@ -110,6 +178,12 @@ const AppointmentForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if user is still authenticated
+    if (!userData) {
+      toast.error('You must be logged in to book an appointment');
+      return;
+    }
+    
     // Basic validation
     if (!formData.patientName || !formData.email || !formData.phone || !formData.doctor || !formData.date || !formData.time) {
       toast.error('Please fill in all required fields');
@@ -121,7 +195,7 @@ const AppointmentForm = () => {
     try {
       // Save appointment to Firestore
       const appointmentData = {
-        userId: userData?.uid || null,
+        userId: userData.uid, // Now guaranteed to exist
         patientName: formData.patientName,
         patientEmail: formData.email,
         patientPhone: formData.phone,
