@@ -1,5 +1,21 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/login", "destination": "/login" },
+    { "source": "/dashboard", "destination": "/dashboard" },
+    { "source": "/appointments", "destination": "/appointments" },
     { "source": "/(.*)", "destination": "/" }
-  ]
+  ],
+  "functions": {
+    "pages/api/auth/[...nextauth].js": {
+      "maxDuration": 30
+    },
+    "pages/api/appointments/[...slug].js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NEXTAUTH_URL": "@nextauth_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret"
+  }
 }
