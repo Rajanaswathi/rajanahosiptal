@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ const Header = () => {
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-600">
               <Phone className="w-4 h-4" />
-              <span>Emergency: +1 (555) 123-4567</span>
+              <span>Emergency: 7382112539</span>
             </div>
             <div className="flex items-center space-x-2 text-gray-600">
               <Mail className="w-4 h-4" />
@@ -116,4 +115,3 @@ const Header = () => {
   );
 };
 
-export default Header;

@@ -16,7 +16,7 @@ const AppointmentTester = () => {
         userId: 'test-user-123',
         patientName: 'Test Patient',
         patientEmail: 'test@example.com',
-        patientPhone: '1234567890',
+        patientPhone: '7382112539',
         doctorId: 'test-doctor-id', // This should match a real doctor ID
         doctorName: 'Dr. Test Doctor',
         date: new Date().toISOString().split('T')[0], // Today

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -121,18 +120,18 @@ const ServicesSection = () => {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a
-                href="tel:+15551234567"
+                href="tel:+17382112539"
                 className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center"
               >
                 <Phone className="w-5 h-5 mr-2" />
-                Emergency: (555) 123-4567
+                Emergency: (738) 211-2539
               </a>
               <a
-                href="tel:+15551234568"
+                href="tel:+17382112539"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center"
               >
                 <Hospital className="w-5 h-5 mr-2" />
-                General Inquiry: (555) 123-4568
+                General Inquiry: (738) 211-2539
               </a>
             </div>
           </div>
@@ -142,4 +141,4 @@ const ServicesSection = () => {
   );
 };
 
-export default ServicesSection;
+

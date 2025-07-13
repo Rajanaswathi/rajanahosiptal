@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, Calendar } from 'lucide-react';
@@ -85,8 +84,8 @@ const Footer = () => {
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-blue-400" />
                 <div className="text-gray-300">
-                  <p>Emergency: +1 (555) 123-4567</p>
-                  <p>General: +1 (555) 123-4568</p>
+                  <p>Emergency: +1 (738) 211-2539</p>
+                  <p>General: +1 (738) 211-2539</p>
                 </div>
               </div>
 
@@ -132,4 +131,3 @@ const Footer = () => {
   );
 };
 
-export default Footer;
